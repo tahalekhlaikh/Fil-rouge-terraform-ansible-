@@ -1,0 +1,83 @@
+stages:          # List of stages for jobs, and their order of execution
+  - init
+  - plan
+  - apply
+  - destroy
+  - deploy
+image:
+    name: "hashicorp/terraform:latest"
+    entrypoint: [""]
+
+before_script:
+  - export OS_AUTH_URL=${AUTH_URL}
+  - export OS_PROJECT_ID=${PROJECT_ID}
+  - export OS_PROJECT_NAME=${PROJECT_NAME}
+  - export OS_USER_DOMAIN_NAME=${USER_DOMAIN_NAME}
+  - export OS_PROJECT_DOMAIN_ID${PROJECT_DOMAIN_ID}
+  - export OS_USERNAME=${USERNAME}
+  - export OS_PASSWORD=${PASSWORD}
+  - export OS_REGION_NAME=${REGION_NAME}
+  - export OS_INTERFACE=${INTERFACE}
+  - export OS_IDENTITY_API_VERSION=${IDENTITY_API_VERSION}
+
+init-job:
+  stage: init
+  script:
+    - terraform init -input=false
+  artifacts:
+    paths:
+      - ./.terraform/
+      - ./.terraform.lock.hcl/
+
+plan-job:   
+  stage: plan
+
+  script:
+    - terraform plan -out=tfplan
+  artifacts:
+    name: "plan"
+    paths:
+      - ./tfplan
+      - ./terraform.tfstate
+
+apply-job:   
+  stage: apply
+  script:
+    - terraform apply -input=false tfplan
+  artifacts:
+    name: "apply"
+    paths:
+      - ./tfplan
+      - ./terraform.tfstate
+      - ./Ansible/host.ini
+      - ./Ansible/mykey.pem
+      - ./Ansible/ip.txt
+
+destroy-job:
+  stage: destroy
+  script:
+    - terraform init
+    - terraform destroy -state=terraform.tfstate -auto-approve
+  artifacts:
+    name: "destroy"
+    paths:
+      - ./tfplan
+      - ./terraform.tfstate  
+  when: manual
+
+deploy-job:
+  stage: deploy
+  tags:
+    - Runner_Deploy
+  before_script:
+    - chmod 600 $CI_PROJECT_DIR/Ansible/mykey.pem
+    - chmod 600 $CI_PROJECT_DIR/Ansible/host.ini
+    - chmod 600 $CI_PROJECT_DIR/Ansible/ip.txt
+    - my_ip=$(cat $CI_PROJECT_DIR/Ansible/ip.txt)
+    - cd Ansible
+    - sudo apt-get update
+    - sudo apt-get install -y ansible
+    - sleep 40
+    - export ANSIBLE_HOST_KEY_CHECKING=False
+  script:
+    - ansible-playbook -i host.ini deploy.yml --extra-vars "MY=${my_ip}"

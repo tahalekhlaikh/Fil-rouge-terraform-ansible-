@@ -1,0 +1,31 @@
+---
+- name: Mise à jour du systeme
+  become: true
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Installation de git
+  become: true
+  ansible.builtin.apt:
+    name:
+      - git
+    state: latest
+
+- name: Clone du git
+  become: true
+  ansible.builtin.git:
+    repo: "https://gitlab.imt-atlantique.fr/t22lekhl/prod-ci"
+    dest: "/home/ubuntu/vappormap"
+
+- name: Installation docker-compose
+  become: true
+  ansible.builtin.apt:
+    name: docker-compose
+    state: present
+    
+
+
+- name: Deploy services with Docker Compose
+  shell: MY_IP={{ MY }} docker-compose up -d
+  args:
+     chdir: /home/ubuntu/vappormap

@@ -1,0 +1,8 @@
+---
+- name: Deploy Vapormap App
+  hosts: all
+  tasks:
+    - name: Environment
+      ansible.builtin.include_role:
+        name: environment
+

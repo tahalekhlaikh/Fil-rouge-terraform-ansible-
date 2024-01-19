@@ -1,0 +1,6 @@
+subnet_ip_range = "192.168.1.0/24"
+ssh_key = "mykey"
+image_id = "00000000-0000-0000-0001-000000000102"
+flavor_id = "5"
+external_network = "external"
+external_network_id = "7af4393b-6556-4d29-b68e-107d02709b96"

@@ -1,0 +1,11 @@
+resource "openstack_compute_instance_v2" "instance-bastion" {
+  name = "bastion"
+  image_id = "c786deab-3fc6-4a92-9a1e-54bcab32e2c2"
+  flavor_id = "s10.small"
+  key_pair = "mykey"
+  security_groups = ["default"]
+
+  network {
+    name = "project-net"
+  }
+}
